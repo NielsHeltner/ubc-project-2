@@ -9,12 +9,12 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
             listAdapter.add(wifiList);
             title.setText("Found " + wifiList.size() + " access points in last scan, " + listAdapter.getItemCount() + " total");
 
-
             Log.d(getString(R.string.app_name), "Found " + wifiList.size() + " access points");
             for (ScanResult scanResult : wifiList) {
                 long timestamp = scanResult.timestamp;
@@ -69,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         }
         catch (NullPointerException e) {
             Log.d(getString(R.string.app_name), "Unable to retrieve WiFi information.");
+            Toast.makeText(getApplicationContext(), "Unable to retrieve WiFi information.", Toast.LENGTH_LONG).show();
         }
     }
 
