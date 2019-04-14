@@ -1,12 +1,12 @@
 package dk.sdu.ubc.ubc_project_2.gui;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,19 +17,18 @@ import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.common.collect.Streams;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 
 import java.util.Comparator;
 import java.util.List;
@@ -89,21 +88,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         title.setText(getString(R.string.title, k));
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-        map.setMyLocationEnabled(true);
-        map.getUiSettings().setMyLocationButtonEnabled(true);
-        map.getUiSettings().setMapToolbarEnabled(false);
+        try {
+            map = googleMap;
+            map.setMyLocationEnabled(true);
+            map.getUiSettings().setMyLocationButtonEnabled(true);
+            map.getUiSettings().setMapToolbarEnabled(false);
 
-        //click listener for gathering radio map data
-        map.setOnMapClickListener(this::collectFingerprints);
+            //click listener for gathering radio map data
+            map.setOnMapClickListener(this::collectFingerprints);
 
-        //move camera to current location to make it easier to find your location on the map
-        fusedLocationClient.getLastLocation().addOnSuccessListener(location ->
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 19))
-        );
+            //move camera to current location to make it easier to find your location on the map
+            fusedLocationClient.getLastLocation().addOnSuccessListener(location ->
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 19))
+            );
+        }
+        catch (SecurityException e) {
+            Log.d(getString(R.string.app_name), "Permissions not received yet");
+        }
     }
 
     /**
@@ -232,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Invoked when the user responds to the app's permission request
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) { // if the request is cancelled, the result arrays are empty
             Log.d(getString(R.string.app_name), "Permission was granted");
             init();
