@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ubc-project-2</string>
+    <string name="title">Click your location on the map to gather data. \nClick the purple button to predict location. \nChange k-value (currently %d) using dot menu.</string>
 </resources>
