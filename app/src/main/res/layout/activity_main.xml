@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".gui.MainActivity">
 
     <TextView
         android:id="@+id/title"
@@ -13,7 +13,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Click your location on the map to gather data. \nClick the purple button to predict location. \nChange k-value using dot menu."
+        android:text="@string/title"
         android:textAppearance="@android:style/TextAppearance.Material.Widget"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"

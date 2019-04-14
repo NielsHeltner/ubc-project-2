@@ -1,4 +1,4 @@
-package dk.sdu.ubc.ubc_project_2;
+package dk.sdu.ubc.ubc_project_2.gui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dk.sdu.ubc.ubc_project_2.R;
 import dk.sdu.ubc.ubc_project_2.domain.Fingerprint;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //maps a single location to a collection of fingerprints
     private Multimap<LatLng, Fingerprint> radioMap = HashMultimap.create();
 
-    private int k = 1;
+    private int k = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,25 +98,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.getUiSettings().setMapToolbarEnabled(false);
 
         //click listener for gathering radio map data
-        map.setOnMapClickListener(latLng -> {
-            Toast.makeText(getApplicationContext(), "Gathering data for location\n" +
-                    "Lat: " + latLng.latitude + "\n" +
-                    "Lon: " + latLng.longitude, Toast.LENGTH_SHORT).show();
-            List<ScanResult> wifiList = wifiManager.getScanResults();
-            if (wifiList.isEmpty()) {
-                Toast.makeText(getApplicationContext(), "No fingerprints have been gathered.\n" +
-                        "Check that WiFi is enabled and there are nearby access points", Toast.LENGTH_LONG).show();
-            }
-            wifiList.stream()
-                    .map(scanResult -> new Fingerprint(scanResult.BSSID, scanResult.level))
-                    .forEach(fingerprint -> radioMap.put(latLng, fingerprint));
-        });
+        map.setOnMapClickListener(this::collectFingerprints);
 
-        //move camera to current location to make it easier to click on the map
-        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-            LatLng lastLocation = new LatLng(location.getLatitude(), location.getLongitude());
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocation, 19));
-        });
+        //move camera to current location to make it easier to find your location on the map
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location ->
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 19))
+        );
+    }
+
+    /**
+     * Collects fingerprints and saves them in a radio map.
+     */
+    private void collectFingerprints(LatLng currentLatLng) {
+        Toast.makeText(getApplicationContext(), "Gathering data for location\n" +
+                "Lat: " + currentLatLng.latitude + "\n" +
+                "Lon: " + currentLatLng.longitude, Toast.LENGTH_SHORT).show();
+        List<ScanResult> fingerprints = wifiManager.getScanResults();
+        if (fingerprints.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "No fingerprints have been gathered.\n" +
+                    "Check that WiFi is enabled and there are nearby access points", Toast.LENGTH_LONG).show();
+        }
+        fingerprints.stream()
+                .map(scanResult -> new Fingerprint(scanResult.BSSID, scanResult.level))
+                .forEach(fingerprint -> radioMap.put(currentLatLng, fingerprint));
     }
 
     @OnClick(R.id.predictBtn)
@@ -131,7 +136,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             double distance = Math.sqrt(value.stream()
                     .filter(fingerprint -> measurements.containsKey(fingerprint.getName()))
                     .map(fingerprint -> Math.pow(measurements.get(fingerprint.getName()) - fingerprint.getSignal(), 2))
-                    .reduce((d1, d2) -> d1 + d2).get());
+                    .reduce((d1, d2) -> d1 + d2)
+                    .get());
             distances.put(key, distance);
         });
 
