@@ -102,6 +102,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     "Lat: " + latLng.latitude + "\n" +
                     "Lon: " + latLng.longitude, Toast.LENGTH_SHORT).show();
             List<ScanResult> wifiList = wifiManager.getScanResults();
+            if (wifiList.isEmpty()) {
+                Toast.makeText(getApplicationContext(), "No fingerprints have been gathered.\n" +
+                        "Check that WiFi is enabled and there are nearby access points", Toast.LENGTH_LONG).show();
+            }
             wifiList.stream()
                     .map(scanResult -> new Fingerprint(scanResult.BSSID, scanResult.level))
                     .forEach(fingerprint -> radioMap.put(latLng, fingerprint));
