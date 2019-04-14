@@ -17,6 +17,8 @@ import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.common.collect.Streams;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,7 +35,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 
 import butterknife.BindView;
@@ -52,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @BindView(R.id.mapView)
     MapView mapView;
     private GoogleMap map;
-    private Marker predicted;
 
     private FusedLocationProviderClient fusedLocationClient;
     private WifiManager wifiManager;
@@ -125,13 +125,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @OnClick(R.id.predictBtn)
     public void predictLocation() {
-        //measurements representing current position
+        //lookup table (based on access point address) of measurements representing current position
         Map<String, Integer> measurements = wifiManager.getScanResults().stream()
                 .collect(Collectors.toMap(entry -> entry.BSSID, entry -> entry.level));
 
         //map of location and distance to that location
+        Map<LatLng, Double> distances = calculateDistances(measurements);
+        if (distances.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "No radiomaps have been gathered.\n" +
+                    "Click your location on the map to gather data.", Toast.LENGTH_LONG).show();
+        }
+        else {
+            //find k nearest neighbors
+            List<LatLng> kNearestNeighbors = findKNearestNeighbors(distances);
+
+            //calculate lat and lon as average of k nearest neighbors' positions
+            LatLng predictedLocation = calculateAvgLatLng(kNearestNeighbors);
+            map.clear();
+            map.addMarker(new MarkerOptions().position(predictedLocation)
+                    .title("Predicted location")
+                    .snippet("Lat: " + predictedLocation.latitude + ", " +
+                            "Lon: " + predictedLocation.longitude));
+
+            Streams.mapWithIndex(kNearestNeighbors.stream(), (latLng, index) ->
+                    new MarkerOptions().position(latLng)
+                        .title("Nearest neighbor (#" + (index + 1) + ")")
+                        .snippet("Lat: " + latLng.latitude + ", " +
+                                "Lon: " + latLng.longitude)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                        .alpha(0.25f))
+                    .forEach(map::addMarker);
+
+            Toast.makeText(getApplicationContext(), "Predicted location (marker):\n" +
+                    "Lat: " + predictedLocation.latitude + "\n" +
+                    "Lon: " + predictedLocation.longitude, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Map<LatLng, Double> calculateDistances(Map<String, Integer> measurements) {
+        //map of location and distance to that location
         Map<LatLng, Double> distances = newHashMap();
-        //calculate euclidian distance from each measurement to each radio map entry
+        //calculate Euclidian distance from each measurement to each radio map entry
         radioMap.asMap().forEach((key, value) -> {
             double distance = Math.sqrt(value.stream()
                     .filter(fingerprint -> measurements.containsKey(fingerprint.getName()))
@@ -140,31 +174,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .get());
             distances.put(key, distance);
         });
+        return distances;
+    }
 
+    private List<LatLng> findKNearestNeighbors(Map<LatLng, Double> distances) {
         //find k nearest neighbors
-        List<LatLng> kNearestNeighbors = distances.entrySet().stream()
+        return distances.entrySet().stream()
                 .sorted(Comparator.comparing(Entry::getValue))
                 .map(Entry::getKey)
                 .limit(k)
                 .collect(Collectors.toList());
+    }
 
+    private LatLng calculateAvgLatLng(List<LatLng> kNearestNeighbors) {
         //calculate lat and lon as average of k nearest neighbors' positions
-        OptionalDouble predictedLat = kNearestNeighbors.stream().mapToDouble(latLng -> latLng.latitude).average();
-        OptionalDouble predictedLon = kNearestNeighbors.stream().mapToDouble(latLng -> latLng.longitude).average();
-        if (predictedLat.isPresent() && predictedLon.isPresent()) {
-            LatLng predictedLocation = new LatLng(predictedLat.getAsDouble(), predictedLon.getAsDouble());
-            if (predicted != null) {
-                predicted.remove();
-            }
-            predicted = map.addMarker(new MarkerOptions().position(predictedLocation).title("Predicted location"));
-            Toast.makeText(getApplicationContext(), "Predicted location (marker):\n" +
-                    "Lat: " + predictedLocation.latitude + "\n" +
-                    "Lon: " + predictedLocation.longitude, Toast.LENGTH_SHORT).show();
-        }
-        else {
-            Toast.makeText(getApplicationContext(), "No radiomaps have been gathered.\n" +
-                    "Click your location on the map to gather data.", Toast.LENGTH_LONG).show();
-        }
+        double predictedLat = kNearestNeighbors.stream().mapToDouble(latLng -> latLng.latitude).average().getAsDouble();
+        double predictedLon = kNearestNeighbors.stream().mapToDouble(latLng -> latLng.longitude).average().getAsDouble();
+
+        return new LatLng(predictedLat, predictedLon);
     }
 
     @Override

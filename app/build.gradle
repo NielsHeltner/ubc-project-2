@@ -33,7 +33,7 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
-    implementation group: 'com.google.guava', name: 'guava', version: '23.5-android'
+    implementation group: 'com.google.guava', name: 'guava', version: '24.1-jre'
     implementation 'com.google.android.gms:play-services-maps:16.1.0'
     implementation 'com.google.android.gms:play-services-location:16.0.0'
 }
