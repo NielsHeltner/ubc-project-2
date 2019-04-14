@@ -3,10 +3,8 @@ package dk.sdu.ubc.ubc_project_2.gui
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -24,13 +22,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.Maps.newHashMap
-import com.google.common.collect.Streams
 import dk.sdu.ubc.ubc_project_2.R
-import dk.sdu.ubc.ubc_project_2.domain.Fingerprint
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.Comparator
-import java.util.stream.Collectors
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -42,8 +35,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     val radioMap: HashMultimap<LatLng, Fingerprint> = HashMultimap.create()
     var k = 3
 
-    override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-        super.onCreate(savedInstanceState, persistentState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         requestPermission()
@@ -60,11 +53,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onResume()
         mapView.getMapAsync(this)
 
-        updateTitle()
+        predictBtn.setOnClickListener { predictLocation() }
+
+        updateHeader()
     }
 
-    private fun updateTitle() {
-        title = getString(R.string.title, k)
+    private fun updateHeader() {
+        header.text = getString(R.string.title, k)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -188,7 +183,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         alert.setView(numberPicker)
         alert.setPositiveButton("Ok") { _, _ ->
             k = numberPicker.value
-            updateTitle()
+            updateHeader()
         }
         alert.setNegativeButton("Cancel") { _, _ -> }
         alert.show()
