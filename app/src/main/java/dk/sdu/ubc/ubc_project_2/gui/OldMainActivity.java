@@ -44,7 +44,7 @@ import dk.sdu.ubc.ubc_project_2.domain.Fingerprint;
 
 import static com.google.common.collect.Maps.newHashMap;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class OldMainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     @BindView(R.id.title)
     TextView title;
