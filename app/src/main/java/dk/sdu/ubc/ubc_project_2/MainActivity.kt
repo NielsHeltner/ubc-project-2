@@ -1,4 +1,4 @@
-package dk.sdu.ubc.ubc_project_2.gui
+package dk.sdu.ubc.ubc_project_2
 
 import android.Manifest
 import android.content.Context
