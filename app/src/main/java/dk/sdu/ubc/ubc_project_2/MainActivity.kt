@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun findKNearestNeighbors(distances: Map<LatLng, Double>): List<LatLng> {
         //find k nearest neighbors
         return distances
-                .toList().sortedBy { (_, value) -> value }.toMap()
+                .toList().sortedBy { (_, distance) -> distance }.toMap()
                 .map { it.key }
                 .take(k)
                 .toList()
